@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Guardian AI Dashboard</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="card">
+    <h2>Guardian AI Dashboard</h2>
+    <p>Status: <span id="deviceStatus">Connecting...</span></p>
+    
+    <h3>Recent Alerts</h3>
+    <div id="alertsArea">No alerts yet</div>
+
+    <div style="margin-top:20px;">
+      <a href="alerts.html"><button>View All Alerts 🚨</button></a>
+      <a href="settings.html"><button>Settings ⚙️</button></a>
+      <a href="profile.html"><button>Profile 👤</button></a>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth } from "./firebase/firebase-config.js";
+    import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    // Protect dashboard page
+    onAuthStateChanged(auth, (user) => {
+      if(!user){
+        window.location = "index.html";
+      }
+    });
+
+    function logout() {
+      signOut(auth);
+    }
+
+    // Simulate device status for now
+    const deviceStatus = document.getElementById("deviceStatus");
+    setTimeout(() => {
+      deviceStatus.innerText = "Online 🟢";
+    }, 1000);
+
+    // Simulate recent alerts for now
+    const alertsArea = document.getElementById("alertsArea");
+    const sampleAlerts = [
+      "Fall detected at 10:05 AM",
+      "Help shout detected at 11:20 AM"
+    ];
+    sampleAlerts.forEach(alert => {
+      const p = document.createElement("p");
+      p.innerText = alert;
+      alertsArea.appendChild(p);
+    });
+  </script>
+</body>
+</html>

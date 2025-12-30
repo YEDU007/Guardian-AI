@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Guardian AI Login</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="card">
+    <h2>Guardian AI Login</h2>
+
+    <div class="input-wrapper">
+      <input type="email" id="email" placeholder=" " required>
+      <label>Email</label>
+      <div id="emailError" class="error-msg">Invalid email</div>
+    </div>
+
+    <div class="input-wrapper">
+      <input type="password" id="password" placeholder=" " required>
+      <label>Password</label>
+      <div id="passError" class="error-msg">Password required</div>
+    </div>
+
+    <button id="loginBtn">Login</button>
+    <p>New user? <a href="signup.html">Create an account</a></p>
+  </div>
+
+<script type="module">
+import { auth } from "./firebase/firebase-config.js";
+import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const loginBtn = document.getElementById("loginBtn");
+
+loginBtn.onclick = () => {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const emailError = document.getElementById("emailError");
+  const passError = document.getElementById("passError");
+
+  emailError.style.display = "none";
+  passError.style.display = "none";
+
+  if(!email){
+    emailError.innerText = "Email required";
+    emailError.style.display = "block";
+    return;
+  }
+  if(!password){
+    passError.innerText = "Password required";
+    passError.style.display = "block";
+    return;
+  }
+
+  signInWithEmailAndPassword(auth, email, password)
+  .then(() => {
+    window.location = "dashboard.html";
+  })
+  .catch(err => {
+    passError.innerText = err.message;
+    passError.style.display = "block";
+  });
+}
+</script>
+</body>
+</html>
