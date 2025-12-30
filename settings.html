@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/layout.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+<script>
+  // Load the navbar component into this page
+  fetch("components/navbar.html")
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById("navbar-container").innerHTML = data;
+    });
+</script>
+
+
+<div class="navbar">Guardian AI
+  <div class="nav-links">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="alerts.html">Alerts</a>
+    <a href="profile.html">Profile</a>
+    <a href="#" onclick="logout()">Logout</a>
+  </div>
+</div>
+
+<div class="container">
+  <h2>⚙️ Settings</h2>
+  <input type="text" id="contact" placeholder="Add Emergency Contact Number">
+  <button onclick="saveSettings()">Save</button>
+</div>
+
+<script type="module">
+    import { auth } from "./firebase/firebase-config.js";
+import { signOut } 
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+window.logout = function(){
+  signOut(auth).then(()=>{
+    window.location = "index.html";
+  });
+}
+
+import { auth, db } from "./firebase/firebase-config.js";
+import { onAuthStateChanged, signOut }
+ from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { doc, setDoc }
+ from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+function saveSettings(){
+  const number = document.getElementById("contact").value;
+  const user = auth.currentUser;
+  setDoc(doc(db, "settings", user.uid), { emergencyContact: number });
+  alert("Settings Saved!");
+}
+function logout(){ signOut(auth); }
+</script>
+
+</body>
+</html>

@@ -1,51 +1,61 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Guardian AI Alerts</title>
-  <link rel="stylesheet" href="assets/styles.css">
-</head>
-<body>
-  <div class="card">
-    <h2>Alerts Log 🚨</h2>
-    <div id="alertArea">
-      No alerts yet
-    </div>
-    <button onclick="goBack()">Back to Dashboard</button>
-  </div>
+<script type="module">
+  import { auth } from "./firebase/firebase-config.js";
+import { signOut } 
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-  <script type="module">
-    import { auth, db } from "./firebase/firebase-config.js";
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+window.logout = function(){
+  signOut(auth).then(()=>{
+    window.location = "index.html";
+  });
+}
 
-    // Only logged-in users
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location = "index.html";
-      }
-    });
+  import { auth, db } from "./firebase/firebase-config.js";
+  import { onAuthStateChanged, signOut } 
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { collection, query, orderBy, onSnapshot } 
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    function goBack() {
-      window.location = "dashboard.html";
+  // Only allow logged-in users
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location = "index.html";
+    } else {
+      loadAlerts(user.uid);
     }
+  });
 
-    // TEMP: Simulate alerts
+  // Real-time alerts from Firestore
+  function loadAlerts(userId) {
     const alertArea = document.getElementById("alertArea");
-    const sampleAlerts = [
-      "Fall detected at 10:25 AM",
-      "Voice emergency at 10:27 AM",
-      "Device offline at 10:30 AM"
-    ];
+    alertArea.innerHTML = "Loading alerts...";
 
-    sampleAlerts.forEach(alert => {
-      const div = document.createElement("div");
-      div.textContent = alert;
-      div.style.margin = "10px 0";
-      div.style.padding = "8px";
-      div.style.border = "1px solid #ccc";
-      div.style.borderRadius = "8px";
-      alertArea.appendChild(div);
+    const alertsRef = collection(db, "alerts");
+    const alertQuery = query(alertsRef, orderBy("time", "desc")); // newest first
+
+    onSnapshot(alertQuery, (snapshot) => {
+      if (snapshot.empty) {
+        alertArea.innerHTML = "No alerts yet 🚫";
+        return;
+      }
+
+      alertArea.innerHTML = ""; // clear old entries
+
+      snapshot.forEach((doc) => {
+        const alert = doc.data();
+        const div = document.createElement("div");
+        div.textContent = `⚠️ ${alert.message} — ${alert.time}`;
+        div.style.margin = "10px 0";
+        div.style.padding = "8px";
+        div.style.border = "1px solid #ccc";
+        div.style.borderRadius = "8px";
+        div.style.background = "#ffeaea";
+        alertArea.appendChild(div);
+      });
     });
-  </script>
-</body>
-</html>
+  }
+
+  // Back navigation
+  function goBack() {
+    window.location = "dashboard.html";
+  }
+</script>
