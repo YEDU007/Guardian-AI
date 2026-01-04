@@ -7,61 +7,36 @@
 </head>
 <body>
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
+<!-- NAVBAR -->
+<div id="navbar"></div>
 <script>
   fetch("components/navbar.html")
     .then(r => r.text())
-    .then(html => {
-      document.getElementById("navbar-container").innerHTML = html;
-    });
+    .then(html => document.getElementById("navbar").innerHTML = html);
 </script>
 
-<!-- HERO SECTION -->
 <section class="hero">
-  <h1>Guardian AI<br>for Elderly Safety</h1>
-  <p>
-    A smart monitoring system designed to protect elderly individuals
-    living alone by detecting emergencies and notifying caregivers in real time.
-  </p>
+  <h1>Guardian AI</h1>
+  <p>Smart monitoring system for elderly safety</p>
 </section>
 
-<!-- DASHBOARD INFO -->
-<section class="dashboard-grid">
-  <div class="glass-card">
+<section class="grid">
+  <div class="card">
     <h3>Device Status</h3>
-    <p id="deviceStatus">Checking connection...</p>
+    <p>Online 🟢</p>
   </div>
-
-  <div class="glass-card">
+  <div class="card">
     <h3>Last Alert</h3>
-    <div class="alert">
-      No alerts yet
-    </div>
+    <p>No alerts</p>
   </div>
-
-  <div class="glass-card">
-    <h3>System Mode</h3>
-    <p>Active Monitoring</p>
+  <div class="card">
+    <h3>Monitoring</h3>
+    <p>Active</p>
   </div>
 </section>
 
-<script type="module">
-  import { auth } from "./firebase/firebase-config.js";
-  import { onAuthStateChanged, signOut }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-  onAuthStateChanged(auth, user => {
-    if (!user) location.href = "index.html";
-  });
-
-  window.logout = () =>
-    signOut(auth).then(() => location.href = "index.html");
-
-  setTimeout(() => {
-    document.getElementById("deviceStatus").innerText = "Online 🟢";
-  }, 1000);
-</script>
+<script type="module" src="assets/app.js"></script>
+<script>protectPage();</script>
 
 </body>
 </html>

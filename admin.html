@@ -1,56 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Guardian AI – Admin Panel</title>
+  <title>Guardian AI | Caregiver</title>
   <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
 
-<div id="navbar-container"></div>
+<div id="navbar"></div>
 <script>
   fetch("components/navbar.html")
     .then(r => r.text())
-    .then(t => document.getElementById("navbar-container").innerHTML = t);
+    .then(html => document.getElementById("navbar").innerHTML = html);
 </script>
 
-<div class="card">
-  <h2>👨‍⚕️ Caregiver Panel</h2>
-  <div id="userList">Loading users...</div>
-</div>
+<section class="hero">
+  <h1>Caregiver Dashboard</h1>
+  <p>Monitor elderly safety status</p>
+</section>
 
-<script type="module">
-  import { db, auth } from "./firebase/firebase-config.js";
-  import { onAuthStateChanged, signOut }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { collection, getDocs }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<section class="grid">
+  <div class="card">👴 Ramesh – Online</div>
+  <div class="card">👵 Lakshmi – Emergency</div>
+  <div class="card">👴 Joseph – Normal</div>
+</section>
 
-  onAuthStateChanged(auth, async user => {
-    if (!user) return location.href = "index.html";
-
-    const usersSnap = await getDocs(collection(db, "users"));
-    const container = document.getElementById("userList");
-    container.innerHTML = "";
-
-    usersSnap.forEach(doc => {
-      const u = doc.data();
-      let contacts = (u.emergencyContacts || [])
-        .map(c => `${c.name} (${c.phone})`)
-        .join("<br>");
-
-      container.innerHTML += `
-        <div class="alert-card">
-          <strong>${u.name || "Unknown"}</strong><br>
-          Age: ${u.age || "-"} | Blood: ${u.bloodGroup || "-"}<br>
-          ${contacts}
-        </div>
-      `;
-    });
-  });
-
-  window.logout = () => signOut(auth).then(() => location.href = "index.html");
-</script>
+<script type="module" src="assets/app.js"></script>
+<script>protectPage();</script>
 
 </body>
 </html>

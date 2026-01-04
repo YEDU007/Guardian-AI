@@ -1,72 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Guardian AI Alerts</title>
+  <title>Guardian AI | Alerts</title>
   <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
 
-<div id="navbar-container"></div>
+<div id="navbar"></div>
 <script>
   fetch("components/navbar.html")
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById("navbar-container").innerHTML = html;
-    });
+    .then(r => r.text())
+    .then(html => document.getElementById("navbar").innerHTML = html);
 </script>
 
-<div class="card">
-  <h2>🚨 Alerts</h2>
-  <div id="alertArea">Loading alerts...</div>
-</div>
+<section class="hero">
+  <h1>Emergency Alerts</h1>
+  <p>Real-time safety notifications</p>
+</section>
 
-<script type="module">
-  import { auth, db } from "./firebase/firebase-config.js";
-  import { onAuthStateChanged, signOut }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { collection, onSnapshot, orderBy, query }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<section class="grid">
+  <div class="card">🚨 Fall detected – Living Room</div>
+  <div class="card">🎤 Help voice detected – Bedroom</div>
+  <div class="card">📡 Device offline – Main unit</div>
+</section>
 
-  const alertSound = new Audio("assets/sounds/alert.mp3");
-  let firstLoad = true;
-
-  onAuthStateChanged(auth, user => {
-    if (!user) window.location.href = "index.html";
-
-    const q = query(collection(db, "alerts"), orderBy("time", "desc"));
-    const alertArea = document.getElementById("alertArea");
-
-    onSnapshot(q, snapshot => {
-      alertArea.innerHTML = "";
-
-      snapshot.forEach(doc => {
-        const a = doc.data();
-
-        const div = document.createElement("div");
-        div.className = "alert-card";
-        div.innerHTML = `
-          ⚠️ <strong>${a.type || "Alert"}</strong><br>
-          ${a.message}<br>
-          <small>${a.time}</small>
-        `;
-
-        alertArea.appendChild(div);
-      });
-
-      // 🔊 Play sound only when NEW alert arrives
-      if (!firstLoad) {
-        alertSound.play();
-      }
-      firstLoad = false;
-    });
-  });
-
-  window.logout = function () {
-    signOut(auth).then(() => window.location.href = "index.html");
-  };
-</script>
-
+<script type="module" src="assets/app.js"></script>
+<script>protectPage();</script>
 
 </body>
 </html>

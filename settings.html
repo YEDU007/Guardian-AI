@@ -7,93 +7,26 @@
 </head>
 <body>
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
+<div id="navbar"></div>
 <script>
   fetch("components/navbar.html")
     .then(r => r.text())
-    .then(html => {
-      document.getElementById("navbar-container").innerHTML = html;
-    });
+    .then(html => document.getElementById("navbar").innerHTML = html);
 </script>
 
-<div class="card">
-  <h2>⚙️ System Settings</h2>
+<section class="hero">
+  <h1>System Settings</h1>
+  <p>Customize monitoring preferences</p>
+</section>
 
-  <label>
-    <input type="checkbox" id="alertSound">
-    Enable Alert Sound
-  </label>
+<section class="grid">
+  <div class="card">🔊 Alert Sound: ON</div>
+  <div class="card">📈 Sensitivity: HIGH</div>
+  <div class="card">🌙 Night Mode: ENABLED</div>
+</section>
 
-  <br><br>
-
-  <label>Alert Sensitivity</label>
-  <select id="sensitivity">
-    <option value="low">Low</option>
-    <option value="medium">Medium</option>
-    <option value="high">High</option>
-  </select>
-
-  <br><br>
-
-  <label>Cooldown (minutes)</label>
-  <input type="number" id="cooldown">
-
-  <button type="button" onclick="saveSettings()">💾 Save Settings</button>
-
-  <hr>
-
-  <h3>✅ Saved Settings</h3>
-  <div id="settingsPreview"></div>
-</div>
-
-<script type="module">
-  import { auth, db } from "./firebase/firebase-config.js";
-  import { onAuthStateChanged, signOut }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { doc, getDoc, setDoc }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  let uid;
-
-  onAuthStateChanged(auth, async user => {
-    if (!user) return location.href = "index.html";
-    uid = user.uid;
-
-    const snap = await getDoc(doc(db, "settings", uid));
-    if (snap.exists()) showPreview(snap.data());
-  });
-
-  function showPreview(d) {
-    settingsPreview.innerHTML = `
-      <div class="alert-card">
-        🔔 Sound: ${d.alertSound ? "On" : "Off"}<br>
-        🎯 Sensitivity: ${d.alertSensitivity}<br>
-        ⏱ Cooldown: ${d.cooldownTime} min
-      </div>
-    `;
-  }
-
-  window.saveSettings = async () => {
-    try {
-      const data = {
-        alertSound: alertSound.checked,
-        alertSensitivity: sensitivity.value,
-        cooldownTime: cooldown.value
-      };
-
-      await setDoc(doc(db, "settings", uid), data);
-      showPreview(data);
-      alert("Settings saved");
-
-    } catch (err) {
-      alert("Save failed: " + err.message);
-    }
-  };
-
-  window.logout = () =>
-    signOut(auth).then(() => location.href = "index.html");
-</script>
+<script type="module" src="assets/app.js"></script>
+<script>protectPage();</script>
 
 </body>
 </html>

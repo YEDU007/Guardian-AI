@@ -7,133 +7,61 @@
 </head>
 <body>
 
-<!-- Navbar -->
-<div id="navbar-container"></div>
+<div id="navbar"></div>
 <script>
   fetch("components/navbar.html")
     .then(r => r.text())
-    .then(html => {
-      document.getElementById("navbar-container").innerHTML = html;
-    });
+    .then(html => document.getElementById("navbar").innerHTML = html);
 </script>
 
-<div class="card">
-  <h2>👤 Elderly Profile</h2>
+<section class="hero">
+  <h1>Elderly Profile</h1>
+  <p>Personal and emergency contact details</p>
+</section>
 
-  <h3>Personal Details</h3>
-  <input id="name" placeholder="Full Name">
-  <input id="age" type="number" placeholder="Age">
-  <input id="gender" placeholder="Gender">
-  <input id="bloodGroup" placeholder="Blood Group">
-  <input id="address" placeholder="Address">
+<section class="grid">
+  <div class="card">
+    <h3>Enter Details</h3>
+    <input id="name" placeholder="Full Name">
+    <input id="age" placeholder="Age">
+    <input id="blood" placeholder="Blood Group">
+    <input id="phone" placeholder="Emergency Contact">
+    <button onclick="saveProfile()">Save</button>
+  </div>
 
-  <label>
-    <input type="checkbox" id="livesAlone"> Lives Alone
-  </label>
+  <div class="card">
+    <h3>Saved Profile</h3>
+    <div id="view">No data saved</div>
+  </div>
+</section>
 
-  <h3>📞 Emergency Contacts</h3>
-  <div id="contactInputs"></div>
+<script>
+  function saveProfile() {
+    const data = {
+      name: name.value,
+      age: age.value,
+      blood: blood.value,
+      phone: phone.value
+    };
+    localStorage.setItem("profile", JSON.stringify(data));
+    render();
+  }
 
-  <button type="button" onclick="addContact()">➕ Add Contact</button>
-  <button type="button" onclick="saveProfile()">💾 Save Profile</button>
-
-  <hr>
-
-  <h3>✅ Saved Contacts</h3>
-  <div id="savedContacts"></div>
-</div>
-
-<script type="module">
-  import { auth, db } from "./firebase/firebase-config.js";
-  import { onAuthStateChanged, signOut }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { doc, getDoc, setDoc }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  let uid;
-  const contactInputs = document.getElementById("contactInputs");
-  const savedContacts = document.getElementById("savedContacts");
-
-  // Utility: never return undefined
-  const safe = v => v ?? "";
-
-  function contactInput(c = {}) {
-    return `
-      <div class="contact-card">
-        <input placeholder="Name" value="${safe(c.name)}">
-        <input placeholder="Phone" value="${safe(c.phone)}">
-        <input placeholder="Relationship" value="${safe(c.relationship)}">
-      </div>
+  function render() {
+    const d = JSON.parse(localStorage.getItem("profile"));
+    if (!d) return;
+    view.innerHTML = `
+      <p><b>Name:</b> ${d.name}</p>
+      <p><b>Age:</b> ${d.age}</p>
+      <p><b>Blood:</b> ${d.blood}</p>
+      <p><b>Contact:</b> ${d.phone}</p>
     `;
   }
-
-  window.addContact = () => {
-    contactInputs.insertAdjacentHTML("beforeend", contactInput());
-  };
-
-  onAuthStateChanged(auth, async user => {
-    if (!user) return location.href = "index.html";
-    uid = user.uid;
-
-    const snap = await getDoc(doc(db, "users", uid));
-    if (!snap.exists()) return;
-
-    const d = snap.data();
-    name.value = safe(d.name);
-    age.value = safe(d.age);
-    gender.value = safe(d.gender);
-    bloodGroup.value = safe(d.bloodGroup);
-    address.value = safe(d.address);
-    livesAlone.checked = !!d.livesAlone;
-
-    renderSavedContacts(d.emergencyContacts || []);
-  });
-
-  function renderSavedContacts(list) {
-    savedContacts.innerHTML = "";
-    list.forEach(c => {
-      savedContacts.innerHTML += `
-        <div class="alert-card">
-          <strong>${safe(c.name)}</strong><br>
-          📞 ${safe(c.phone)}<br>
-          🤝 ${safe(c.relationship)}
-        </div>
-      `;
-    });
-  }
-
-  window.saveProfile = async () => {
-    try {
-      const contacts = [...contactInputs.children].map(c => ({
-        name: safe(c.children[0].value),
-        phone: safe(c.children[1].value),
-        relationship: safe(c.children[2].value)
-      }));
-
-      const data = {
-        name: safe(name.value),
-        age: safe(age.value),
-        gender: safe(gender.value),
-        bloodGroup: safe(bloodGroup.value),
-        address: safe(address.value),
-        livesAlone: livesAlone.checked,
-        emergencyContacts: contacts
-      };
-
-      await setDoc(doc(db, "users", uid), data);
-
-      renderSavedContacts(contacts);
-      contactInputs.innerHTML = "";
-      alert("Profile saved successfully");
-
-    } catch (err) {
-      alert("Save failed: " + err.message);
-    }
-  };
-
-  window.logout = () =>
-    signOut(auth).then(() => location.href = "index.html");
+  render();
 </script>
+
+<script type="module" src="assets/app.js"></script>
+<script>protectPage();</script>
 
 </body>
 </html>
