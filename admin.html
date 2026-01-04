@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Guardian AI – Admin Panel</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div id="navbar-container"></div>
+<script>
+  fetch("components/navbar.html")
+    .then(r => r.text())
+    .then(t => document.getElementById("navbar-container").innerHTML = t);
+</script>
+
+<div class="card">
+  <h2>👨‍⚕️ Caregiver Panel</h2>
+  <div id="userList">Loading users...</div>
+</div>
+
+<script type="module">
+  import { db, auth } from "./firebase/firebase-config.js";
+  import { onAuthStateChanged, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { collection, getDocs }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) return location.href = "index.html";
+
+    const usersSnap = await getDocs(collection(db, "users"));
+    const container = document.getElementById("userList");
+    container.innerHTML = "";
+
+    usersSnap.forEach(doc => {
+      const u = doc.data();
+      let contacts = (u.emergencyContacts || [])
+        .map(c => `${c.name} (${c.phone})`)
+        .join("<br>");
+
+      container.innerHTML += `
+        <div class="alert-card">
+          <strong>${u.name || "Unknown"}</strong><br>
+          Age: ${u.age || "-"} | Blood: ${u.bloodGroup || "-"}<br>
+          ${contacts}
+        </div>
+      `;
+    });
+  });
+
+  window.logout = () => signOut(auth).then(() => location.href = "index.html");
+</script>
+
+</body>
+</html>

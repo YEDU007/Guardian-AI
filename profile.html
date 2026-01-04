@@ -1,76 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<link rel="stylesheet" href="assets/styles.css">
-<link rel="stylesheet" href="assets/layout.css">
+  <meta charset="UTF-8">
+  <title>Guardian AI | Profile</title>
+  <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-    <div id="navbar-container"></div>
 
+<!-- Navbar -->
+<div id="navbar-container"></div>
 <script>
-  // Load the navbar component into this page
   fetch("components/navbar.html")
-    .then(res => res.text())
-    .then(data => {
-      document.getElementById("navbar-container").innerHTML = data;
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById("navbar-container").innerHTML = html;
     });
 </script>
 
+<div class="card">
+  <h2>👤 Elderly Profile</h2>
 
-<div class="navbar">
-  Guardian AI
-  <div class="nav-links">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="alerts.html">Alerts</a>
-    <a href="settings.html">Settings</a>
-    <a href="#" onclick="logout()">Logout</a>
-  </div>
-</div>
+  <h3>Personal Details</h3>
+  <input id="name" placeholder="Full Name">
+  <input id="age" type="number" placeholder="Age">
+  <input id="gender" placeholder="Gender">
+  <input id="bloodGroup" placeholder="Blood Group">
+  <input id="address" placeholder="Address">
 
-<div class="container">
-  <h2>👤 User Profile</h2>
-  <p>Email: <span id="userEmail"></span></p>
+  <label>
+    <input type="checkbox" id="livesAlone"> Lives Alone
+  </label>
 
-  <h3>Edit Profile</h3>
-  <input type="text" id="username" placeholder="Enter Name (Optional)">
-  <button onclick="saveProfile()">Save Profile</button>
+  <h3>📞 Emergency Contacts</h3>
+  <div id="contactInputs"></div>
+
+  <button type="button" onclick="addContact()">➕ Add Contact</button>
+  <button type="button" onclick="saveProfile()">💾 Save Profile</button>
+
+  <hr>
+
+  <h3>✅ Saved Contacts</h3>
+  <div id="savedContacts"></div>
 </div>
 
 <script type="module">
-    import { auth } from "./firebase/firebase-config.js";
-import { signOut } 
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { auth, db } from "./firebase/firebase-config.js";
+  import { onAuthStateChanged, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { doc, getDoc, setDoc }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-window.logout = function(){
-  signOut(auth).then(()=>{
-    window.location = "index.html";
+  let uid;
+  const contactInputs = document.getElementById("contactInputs");
+  const savedContacts = document.getElementById("savedContacts");
+
+  // Utility: never return undefined
+  const safe = v => v ?? "";
+
+  function contactInput(c = {}) {
+    return `
+      <div class="contact-card">
+        <input placeholder="Name" value="${safe(c.name)}">
+        <input placeholder="Phone" value="${safe(c.phone)}">
+        <input placeholder="Relationship" value="${safe(c.relationship)}">
+      </div>
+    `;
+  }
+
+  window.addContact = () => {
+    contactInputs.insertAdjacentHTML("beforeend", contactInput());
+  };
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) return location.href = "index.html";
+    uid = user.uid;
+
+    const snap = await getDoc(doc(db, "users", uid));
+    if (!snap.exists()) return;
+
+    const d = snap.data();
+    name.value = safe(d.name);
+    age.value = safe(d.age);
+    gender.value = safe(d.gender);
+    bloodGroup.value = safe(d.bloodGroup);
+    address.value = safe(d.address);
+    livesAlone.checked = !!d.livesAlone;
+
+    renderSavedContacts(d.emergencyContacts || []);
   });
-}
 
-import { auth, db } from "./firebase/firebase-config.js";
-import { onAuthStateChanged, signOut } 
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { doc, setDoc } 
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  function renderSavedContacts(list) {
+    savedContacts.innerHTML = "";
+    list.forEach(c => {
+      savedContacts.innerHTML += `
+        <div class="alert-card">
+          <strong>${safe(c.name)}</strong><br>
+          📞 ${safe(c.phone)}<br>
+          🤝 ${safe(c.relationship)}
+        </div>
+      `;
+    });
+  }
 
-onAuthStateChanged(auth, user => {
-  if(!user) return window.location = "index.html";
-  document.getElementById("userEmail").textContent = user.email;
-});
+  window.saveProfile = async () => {
+    try {
+      const contacts = [...contactInputs.children].map(c => ({
+        name: safe(c.children[0].value),
+        phone: safe(c.children[1].value),
+        relationship: safe(c.children[2].value)
+      }));
 
-function saveProfile(){
-  const name = document.getElementById("username").value;
-  const user = auth.currentUser;
+      const data = {
+        name: safe(name.value),
+        age: safe(age.value),
+        gender: safe(gender.value),
+        bloodGroup: safe(bloodGroup.value),
+        address: safe(address.value),
+        livesAlone: livesAlone.checked,
+        emergencyContacts: contacts
+      };
 
-  setDoc(doc(db, "users", user.uid), {
-      name: name,
-      email: user.email
-  });
+      await setDoc(doc(db, "users", uid), data);
 
-  alert("Profile Saved!");
-}
+      renderSavedContacts(contacts);
+      contactInputs.innerHTML = "";
+      alert("Profile saved successfully");
 
-function logout(){ signOut(auth); }
+    } catch (err) {
+      alert("Save failed: " + err.message);
+    }
+  };
+
+  window.logout = () =>
+    signOut(auth).then(() => location.href = "index.html");
 </script>
 
 </body>

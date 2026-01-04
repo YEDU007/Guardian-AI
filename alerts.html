@@ -1,61 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Guardian AI Alerts</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div id="navbar-container"></div>
+<script>
+  fetch("components/navbar.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("navbar-container").innerHTML = html;
+    });
+</script>
+
+<div class="card">
+  <h2>🚨 Alerts</h2>
+  <div id="alertArea">Loading alerts...</div>
+</div>
+
 <script type="module">
-  import { auth } from "./firebase/firebase-config.js";
-import { signOut } 
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-window.logout = function(){
-  signOut(auth).then(()=>{
-    window.location = "index.html";
-  });
-}
-
   import { auth, db } from "./firebase/firebase-config.js";
-  import { onAuthStateChanged, signOut } 
+  import { onAuthStateChanged, signOut }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { collection, query, orderBy, onSnapshot } 
+  import { collection, onSnapshot, orderBy, query }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // Only allow logged-in users
-  onAuthStateChanged(auth, (user) => {
-    if (!user) {
-      window.location = "index.html";
-    } else {
-      loadAlerts(user.uid);
-    }
-  });
+  const alertSound = new Audio("assets/sounds/alert.mp3");
+  let firstLoad = true;
 
-  // Real-time alerts from Firestore
-  function loadAlerts(userId) {
+  onAuthStateChanged(auth, user => {
+    if (!user) window.location.href = "index.html";
+
+    const q = query(collection(db, "alerts"), orderBy("time", "desc"));
     const alertArea = document.getElementById("alertArea");
-    alertArea.innerHTML = "Loading alerts...";
 
-    const alertsRef = collection(db, "alerts");
-    const alertQuery = query(alertsRef, orderBy("time", "desc")); // newest first
+    onSnapshot(q, snapshot => {
+      alertArea.innerHTML = "";
 
-    onSnapshot(alertQuery, (snapshot) => {
-      if (snapshot.empty) {
-        alertArea.innerHTML = "No alerts yet 🚫";
-        return;
-      }
+      snapshot.forEach(doc => {
+        const a = doc.data();
 
-      alertArea.innerHTML = ""; // clear old entries
-
-      snapshot.forEach((doc) => {
-        const alert = doc.data();
         const div = document.createElement("div");
-        div.textContent = `⚠️ ${alert.message} — ${alert.time}`;
-        div.style.margin = "10px 0";
-        div.style.padding = "8px";
-        div.style.border = "1px solid #ccc";
-        div.style.borderRadius = "8px";
-        div.style.background = "#ffeaea";
+        div.className = "alert-card";
+        div.innerHTML = `
+          ⚠️ <strong>${a.type || "Alert"}</strong><br>
+          ${a.message}<br>
+          <small>${a.time}</small>
+        `;
+
         alertArea.appendChild(div);
       });
-    });
-  }
 
-  // Back navigation
-  function goBack() {
-    window.location = "dashboard.html";
-  }
+      // 🔊 Play sound only when NEW alert arrives
+      if (!firstLoad) {
+        alertSound.play();
+      }
+      firstLoad = false;
+    });
+  });
+
+  window.logout = function () {
+    signOut(auth).then(() => window.location.href = "index.html");
+  };
 </script>
+
+
+</body>
+</html>

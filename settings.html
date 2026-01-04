@@ -1,61 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<link rel="stylesheet" href="assets/styles.css">
-<link rel="stylesheet" href="assets/layout.css">
+  <meta charset="UTF-8">
+  <title>Guardian AI | Settings</title>
+  <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-    <div id="navbar-container"></div>
 
+<!-- Navbar -->
+<div id="navbar-container"></div>
 <script>
-  // Load the navbar component into this page
   fetch("components/navbar.html")
-    .then(res => res.text())
-    .then(data => {
-      document.getElementById("navbar-container").innerHTML = data;
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById("navbar-container").innerHTML = html;
     });
 </script>
 
+<div class="card">
+  <h2>⚙️ System Settings</h2>
 
-<div class="navbar">Guardian AI
-  <div class="nav-links">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="alerts.html">Alerts</a>
-    <a href="profile.html">Profile</a>
-    <a href="#" onclick="logout()">Logout</a>
-  </div>
-</div>
+  <label>
+    <input type="checkbox" id="alertSound">
+    Enable Alert Sound
+  </label>
 
-<div class="container">
-  <h2>⚙️ Settings</h2>
-  <input type="text" id="contact" placeholder="Add Emergency Contact Number">
-  <button onclick="saveSettings()">Save</button>
+  <br><br>
+
+  <label>Alert Sensitivity</label>
+  <select id="sensitivity">
+    <option value="low">Low</option>
+    <option value="medium">Medium</option>
+    <option value="high">High</option>
+  </select>
+
+  <br><br>
+
+  <label>Cooldown (minutes)</label>
+  <input type="number" id="cooldown">
+
+  <button type="button" onclick="saveSettings()">💾 Save Settings</button>
+
+  <hr>
+
+  <h3>✅ Saved Settings</h3>
+  <div id="settingsPreview"></div>
 </div>
 
 <script type="module">
-    import { auth } from "./firebase/firebase-config.js";
-import { signOut } 
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { auth, db } from "./firebase/firebase-config.js";
+  import { onAuthStateChanged, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { doc, getDoc, setDoc }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-window.logout = function(){
-  signOut(auth).then(()=>{
-    window.location = "index.html";
+  let uid;
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) return location.href = "index.html";
+    uid = user.uid;
+
+    const snap = await getDoc(doc(db, "settings", uid));
+    if (snap.exists()) showPreview(snap.data());
   });
-}
 
-import { auth, db } from "./firebase/firebase-config.js";
-import { onAuthStateChanged, signOut }
- from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { doc, setDoc }
- from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  function showPreview(d) {
+    settingsPreview.innerHTML = `
+      <div class="alert-card">
+        🔔 Sound: ${d.alertSound ? "On" : "Off"}<br>
+        🎯 Sensitivity: ${d.alertSensitivity}<br>
+        ⏱ Cooldown: ${d.cooldownTime} min
+      </div>
+    `;
+  }
 
-function saveSettings(){
-  const number = document.getElementById("contact").value;
-  const user = auth.currentUser;
-  setDoc(doc(db, "settings", user.uid), { emergencyContact: number });
-  alert("Settings Saved!");
-}
-function logout(){ signOut(auth); }
+  window.saveSettings = async () => {
+    try {
+      const data = {
+        alertSound: alertSound.checked,
+        alertSensitivity: sensitivity.value,
+        cooldownTime: cooldown.value
+      };
+
+      await setDoc(doc(db, "settings", uid), data);
+      showPreview(data);
+      alert("Settings saved");
+
+    } catch (err) {
+      alert("Save failed: " + err.message);
+    }
+  };
+
+  window.logout = () =>
+    signOut(auth).then(() => location.href = "index.html");
 </script>
 
 </body>
